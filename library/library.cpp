@@ -13,8 +13,8 @@ using namespace std;
 //NOTE: also make sure you save patron and book data to disk any time you make a change to them
 //NOTE: for files where data is stored see constants.h BOOKFILE and PATRONFILE
 
-vector<book>books;
-vector<patron> patrons;
+std::vector<book> books;
+std::vector<patron> patrons;
 
 /*
  * clear books and patrons containers
@@ -51,9 +51,8 @@ void reloadAllData(){
  *         TOO_MANY_OUT patron has the max number of books allowed checked out
  */
 int checkout(int bookid, int patronid){
+	reloadAllData();
 	//loading books and patrons from disk
-	loadBooks(books, BOOKFILE.c_str());
-	loadPatrons(patrons, PATRONFILE.c_str());
 
 	/*Valid set to false then looks through the vector to see if
 	  the patronid is valid.
@@ -85,11 +84,11 @@ int checkout(int bookid, int patronid){
 }
 
 /* check a book back in 
- * first load books and patrons from disk
- * make sure book in collection (bookid is assigned to a book in books container)
+ * first load books and patrons from disk -
+ * make sure book in collection (bookid is assigned to a book in books container) -
  *  	
- * if so find the the patron the book is checked out to and decrement his/hers number_books_checked_out
- * then check the book back in by marking the book.loaned_to_patron_id = NO_ONE and the book.state = IN;
+ * if so find the the patron the book is checked out to and decrement his/hers number_books_checked_out-
+ * then check the book back in by marking the book.loaned_to_patron_id = NO_ONE and the book.state = IN; -
  
  * Finally save the contents of the books and patrons containers to disk
  * 
@@ -97,6 +96,20 @@ int checkout(int bookid, int patronid){
  * 		   BOOK_NOT_IN_COLLECTION
  */
 int checkin(int bookid){
+	reloadAllData();
+
+	for(int i = 0 ; i < int(books.size()) ; i++){
+		if (books[i].book_id == bookid){
+			int tmpID = books[i].loaned_to_patron_id;
+			patrons[tmpID].number_books_checked_out--;	//using -- here if problem look back here
+			books[i].loaned_to_patron_id = NO_ONE;
+			books[i].state = IN;
+		}
+	}
+
+	saveBooks(books, BOOKFILE.c_str());
+	savePatrons(patrons, PATRONFILE.c_str());
+
 	return SUCCESS;
 }
 
@@ -110,8 +123,7 @@ int checkin(int bookid){
  *    the patron_id of the person added
  */
 int enroll(std::string &name){
-	loadBooks(books, BOOKFILE.c_str());
-	loadPatrons(patrons, PATRONFILE.c_str());
+	reloadAllData();
 
 	int newPatronID = patrons.size();
 	patron newPatron;
